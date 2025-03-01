@@ -113,6 +113,54 @@ binary_sensor:
         then:
           - button.press: factory_reset_btn
 
+  - platform: gpio
+    pin:
+      number: GPIO21
+    name: "Presence detect"
+    disabled_by_default: false
+    device_class: "occupancy"
+
+
+sensor:
+  - platform: aht10 # remove for no sensor version
+    i2c_id: bus_b
+    variant: AHT20
+    temperature:
+      name: "S3 Temperature"
+      id: s3temp
+    humidity:
+      name: "S3 Humidity"
+    update_interval: 60s
+
+  - platform: adc # remove for no sensor version
+    pin: GPIO10
+    id: battery_voltage
+    unit_of_measurement: "V"
+    accuracy_decimals: 1
+    device_class: "voltage"
+    entity_category: "diagnostic"
+    disabled_by_default: true
+    update_interval: 30s
+    attenuation: auto
+    filters:
+        - multiply: 4.11
+
+  - platform: copy # remove for no sensor version
+    id: battery_percent
+    source_id: battery_voltage
+    name: "Battery level"
+    unit_of_measurement: "%"
+    accuracy_decimals: 0
+    device_class: "battery"
+    entity_category: "diagnostic"
+    filters:
+      - lambda: return (x - 2.7) / (4.2 - 2.7) * 100;
+      - clamp:
+          min_value: 0
+          max_value: 100  
+
+  
+
 output:
   - platform: ledc
     pin: GPIO47
@@ -129,8 +177,16 @@ light:
     default_transition_length: 250ms
 
 i2c:
-  scl: GPIO18
-  sda: GPIO8
+  - scl: GPIO18
+    sda: GPIO8
+  
+  - sda: GPIO41
+    scl: GPIO40
+    scan: false
+    sda_pullup_enabled: true
+    scl_pullup_enabled: true
+    frequency: 50kHz
+    id: bus_b
 
 i2s_audio:
   - id: i2s_audio_bus
